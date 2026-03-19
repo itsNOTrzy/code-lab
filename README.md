@@ -7,4 +7,4 @@ This repository contains:
 - Python scripts (prototyping, data processing, visualization)
 - Random explorations and unfinished thoughts
 
-> Code is not just engineering — it's a way to explore structures.
+> Not everything here is useful — but everything here is exploratory.
