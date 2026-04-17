@@ -1,0 +1,146 @@
+/*****************************************
+*  function list:
+*      testR()          测试PicReader图片读取与检查读取数据，提供五张demo图片，分别为纯黑、纯白、纯红、纯绿、纯蓝
+*      testP_Text()		测试FastPrinter的随机文字位置绘制，2000次，位置随机，文字颜色固定
+*      testP_HRect()	测试FastPrinter的随机空心矩阵绘制，2000次，位置文字颜色随机
+*      testP_SRect()	测试FastPrinter的随机实心矩阵绘制，2000次，位置文字颜色随机
+*      testP_RandCF()	测试FastPrinter的随机全屏幕数据绘制，20次，性能瓶颈在过多随机的颜色
+*      testP_RandCA()	测试FastPrinter的随机区域数据绘制，200次，性能瓶颈在过多随机的颜色
+*  提示：通过测试，如果你需要做动画，你应该尽可能地不指定颜色进行绘制
+*****************************************/
+
+/******************************************
+*  说明：FastPrinter(DWORD, DWORD)的初始化参数为两个整数，代表着窗口的宽度和高度
+*        COORD为一个结构体，内部储存着两个变量X Y，表示即将输出文字第一个字在窗口内的坐标(X, Y)
+*       FastPrinter::setText提供三个重载函数，参数分别如下
+*       (COORD, const char*) 在指定坐标绘制文字，颜色默认黑色背景，白色前景
+*       (COORD, const char*, WORD) 在指定坐标绘制文字，并伴随颜色
+*       (COORD, const char*, WORD, WORD)  在指定坐标绘制文字，并伴随颜色，由于给出了字串的长度，故该效率会微微微微高于上面一个
+*       颜色命名空间fp_color：提供前景色16种、背景色16种，f开头的为前景色（字体颜色），b开头的为背景色（字体底色），带l的为淡色
+*                           组合方式为(fp_color::f_color | fp_color::b_color)
+*                           如下面第二个setText，则改文字拥有的颜色为前景淡紫色和背景淡蓝色
+*******************************************/
+
+/******************************************
+	*  说明：FastPrinter::setRect(SMALL_RECT, char, WORD)，该函数将会在SMALL_RECT结构体描述的区域描边
+	*                            使用char作为描边字符，并全部刷上第三个参数描述的颜色
+	*******************************************/
+
+	/******************************************
+		*  说明：FastPrinter::fillRect(SMALL_RECT, char, WORD)，该函数将会在SMALL_RECT结构体描述的区域填充
+		*                            使用char作为填充字符，并全部刷上第三个参数描述的颜色
+		*******************************************/
+
+		/******************************************
+			*  说明：FastPrinter::setData(const char*, const WORD*)
+			*                     该函数用于传入和控制台窗口大小一致的一维数组描述的dataBuffer，
+			*                     需要注意的是传入的是一维数组指针
+			*******************************************/
+
+			/******************************************
+			*  说明：FastPrinter::setData(const char*, const WORD*, SMALL_RECT)
+			*                     该函数用于传入和SMALL_RECT描述区域大小一致的一维数组描述的dataBuffer，
+			*                     需要注意的是传入的是一维数组指针
+			*
+			*                     与上一个函数的区别是，这将只会在指定矩形区域进行绘制
+			*******************************************/
+
+#include "PicReader.h"
+#include "FastPrinter.h"
+#include <stdio.h>
+
+int main() {
+	PicReader imread;
+	BYTE* data = nullptr;
+	UINT x, y;
+
+	//DWORD tic;
+	//tic = GetTickCount();
+
+	FastPrinter printer(120, 50);
+	COORD textXY;
+	printer.cleanSrceen();
+	textXY.X = rand() % 100; textXY.Y = rand() % 50;
+	printer.setText(textXY, "ABCDEFG?", 8, 142, 222, 26, 37, 42, 244);
+	printer.draw(true);
+
+	printf("Press enter to continue...");
+	getchar();
+
+	SMALL_RECT rectPOS;
+	printer.cleanSrceen();
+
+	rectPOS.Left = rand() % 58 + 1;
+	rectPOS.Right = rectPOS.Left + rand() % 58;
+	rectPOS.Top = rand() % 24 + 1;
+	rectPOS.Bottom = rectPOS.Top + rand() % 24;
+
+	printer.setRect(rectPOS, '2', 142, 222, 26, 37, 42, 244);
+
+	printer.draw(true);
+
+	printf("Press enter to continue...");
+	getchar();
+
+	char* dataBuffer = new char[120 * 50];
+	BYTE* frontColorBuffer = new BYTE[120 * 50 * 3];
+	BYTE* backColorBuffer = new BYTE[120 * 50 * 3];
+
+	printer.cleanSrceen();
+
+	for (int i = 0; i < 120 * 50; i++) {
+		dataBuffer[i] = rand() % 70 + 48;
+		frontColorBuffer[i * 3] = rand() % 255;
+		frontColorBuffer[i * 3 + 1] = rand() % 255;
+		frontColorBuffer[i * 3 + 2] = rand() % 255;
+		backColorBuffer[i * 3] = rand() % 255;
+		backColorBuffer[i * 3 + 1] = rand() % 255;
+		backColorBuffer[i * 3 + 2] = rand() % 255;
+	}
+
+	printer.setData(dataBuffer, frontColorBuffer, backColorBuffer);
+
+	printer.draw(true);
+
+	delete[] dataBuffer;
+	delete[] frontColorBuffer;
+	delete[] backColorBuffer;
+
+	printf("Press enter to continue...");
+	getchar();
+
+	SMALL_RECT drawArea;
+	dataBuffer = new char[120 * 50];
+	frontColorBuffer = new BYTE[120 * 50 * 3];
+	backColorBuffer = new BYTE[120 * 50 * 3];
+
+	printer.cleanSrceen();
+
+	drawArea.Left = rand() % 58 + 1;
+	drawArea.Right = drawArea.Left + rand() % 58;
+	drawArea.Top = rand() % 24 + 1;
+	drawArea.Bottom = drawArea.Top + rand() % 24;
+
+	for (int i = 0; i < (drawArea.Right - drawArea.Left) * (drawArea.Bottom - drawArea.Top); i++) {
+		dataBuffer[i] = rand() % 70 + 48;
+		frontColorBuffer[i * 3] = rand() % 255;
+		frontColorBuffer[i * 3 + 1] = rand() % 255;
+		frontColorBuffer[i * 3 + 2] = rand() % 255;
+		backColorBuffer[i * 3] = rand() % 255;
+		backColorBuffer[i * 3 + 1] = rand() % 255;
+		backColorBuffer[i * 3 + 2] = rand() % 255;
+	}
+
+	printer.setData(dataBuffer, frontColorBuffer, backColorBuffer, drawArea);
+
+	printer.draw(true);
+
+	delete[] dataBuffer;
+	delete[] frontColorBuffer;
+	delete[] backColorBuffer;
+
+	printf("Press enter to continue...");
+	getchar();
+	//printf("Elapsed: %u ms\n", GetTickCount() - tic);
+	return 0;
+}
