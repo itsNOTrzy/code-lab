@@ -1,0 +1,3 @@
+void reformer (
+	char expString[]
+	);

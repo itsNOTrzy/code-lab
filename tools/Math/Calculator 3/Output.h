@@ -1,0 +1,3 @@
+void Output (
+	void
+	);
